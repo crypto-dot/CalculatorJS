@@ -4,14 +4,13 @@ let equal = document.querySelector(".buttonEquals");
 let backSpace = document.querySelector(".buttonBackSpace");
 let displayOperands = document.querySelector(".operands");
 let displayResults = document.querySelector(".results");
+let decimalPoint = document.querySelector(".buttonDot");
 
-let numbers = [];
-let stopIndex = -1;
 let defaultZero = true;
 let displayOperandsNoSpaces = displayOperands.textContent;
-let atLeastOneOperator = false;
+let operatorCount= 0;
 let precedessorIsOperator = false;
-let decimalPoint = false;
+let canAddDecimalPoint = true;
 const MAX_CHARSPACE = 44;
 
 const buttonNumClicked = function(e) {
@@ -27,9 +26,9 @@ const buttonNumClicked = function(e) {
     else if (displayOperandsNoSpaces.length === MAX_CHARSPACE/2){
         displayOperands.textContent += " ";
         displayOperands.textContent += number;
-        displayOperandsNoSpaces = displayOperands.textContent.replace(" ",'');
+        displayOperandsNoSpaces = displayOperands.textContent.replace(" ","");
     }
-    else if(displayOperandsNoSpaces.length >= MAX_CHARSPACE - 2 && !atLeastOneOperator){
+    else if(displayOperandsNoSpaces.length >= MAX_CHARSPACE - 2 && operatorCount != 0){
         return;
     }
     else if(displayOperandsNoSpaces.length == MAX_CHARSPACE) {
@@ -43,13 +42,17 @@ const buttonNumClicked = function(e) {
 }
 
 const buttonOperatorClicked = function(e) {
-    if(!precedessorIsOperator && !(displayOperandsNoSpaces.length == MAX_CHARSPACE)) {
-        numbers.push(displayOperandsNoSpaces.slice(stopIndex + 1, displayOperandsNoSpaces.length));
-        stopIndex += displayOperandsNoSpaces.length;
+    if(!precedessorIsOperator && !(displayOperandsNoSpaces.length === MAX_CHARSPACE)) {
+        if (displayOperandsNoSpaces.length === MAX_CHARSPACE/2){
+            displayOperands.textContent += " ";
+            displayOperands.textContent += this.textContent;
+            displayOperandsNoSpaces = displayOperands.textContent.replace(" ","");
+            return;
+        }
         displayOperands.textContent += this.textContent;
-        displayOperandsNoSpaces = displayOperands.textContent.replace(" ", "    ");
-        stopIndex++;
+        displayOperandsNoSpaces = displayOperands.textContent.replace(" ", "");
         precedessorIsOperator = true;
+        operatorCount++;
     }
     else {
         return;
@@ -57,46 +60,62 @@ const buttonOperatorClicked = function(e) {
 }
 
 const buttonEqualClicked = function(e) {
-    //trim the expression
-    numbers.push(stopIndex + 1, displayOperandsNoSpaces.length);
-    const evaluationExpression = displayOperands.textContent.split("x");
-    const evaluationExpression2 = displayOperands.textContent.split("-");
-    const evaluationExpression3 = displayOperands.textContent.split("+");
-    const evaluationExpression4 = displayOperands.textContent.split("/");
-    if(evaluationExpression.length - 1 === 0 && evaluationExpression2.length - 1 === 0 && evaluationExpression3.length - 1 === 0 && evaluationExpression4.length - 1 === 0){
-        displayResults.textContent = displayOperands.textContent;
+    let temp = displayOperandsNoSpaces;
+    displayResults.textContent = evaluationExpression();
+    displayOperandsNoSpaces = temp;
+}
+
+const atomsParse = function () {
+    if(!isNaN(Number(displayOperandsNoSpaces))){
+        atom = displayOperandsNoSpaces;
+        return atom;
     }
-
-    if(!(evaluationExpression.length === 0) && !(evaluationExpression4.length ===0))
-    console.log(evaluationExpression);
-    console.log(evaluationExpression2);
-    console.log(evaluationExpression3);
-    console.log(evaluationExpression4);
+    atom = displayOperandsNoSpaces.match(/\.*[0-9]+\.*[0-9]*/)[0];
+    displayOperandsNoSpaces = displayOperandsNoSpaces.slice(atom.length);
+    return atom;
+}
+const factorsParse = function () {
+    let number1 = Number(atomsParse());
+    for(;;){
+        let operator = displayOperandsNoSpaces.charAt(0);
+        if(operator !== '/' && operator !== 'x')
+            return number1;
+        displayOperandsNoSpaces = displayOperandsNoSpaces.slice(1);
+        number2 = atomsParse(displayOperandsNoSpaces);
+        if(operator == '/')
+            number1/=Number(number2);
+        else 
+            number1*=Number(number2);
+    }
 }
 
-const addition = function(...args) {
+const summands = function () {
+        let number1 = Number(factorsParse());
+        for(;;){
+            let operator = displayOperandsNoSpaces.charAt(0);
+            if(operator !== '-' && operator !== '+'){
+                return number1;
+            }
+            displayOperandsNoSpaces = displayOperandsNoSpaces.slice(1);
+            number2 = factorsParse();
+            if(operator === '-')
+                number1 -= Number(number2);
+            else 
+                number1 += Number(number2);
 
+        }
+    
 }
-const subtraction = function(...args) {
 
+const evaluationExpression = function() {
+    return summands();
 }
-const multplication = function(...args) {
-
-}
-const division = function(...args) {
-
-}
-
-
-
-
-
-
 
 const backSpaceClicked = function(e) {
-    let endingChar = displayOperands.textContent.charAt(displayOperands.length-1);
+    let endingChar = displayOperands.textContent.charAt(displayOperands.textContent.length-1);
     if(endingChar === "x" || endingChar === "+" || endingChar === "-" || endingChar === "/" ){
         precedessorIsOperator = false;
+        operatorCount--;
     }
     displayOperands.textContent = displayOperands.textContent.slice(0, displayOperands.textContent.length - 1);
     displayOperandsNoSpaces = displayOperands.textContent.replace(" ","");
@@ -105,6 +124,20 @@ const backSpaceClicked = function(e) {
         displayOperands.textContent = 0;
     }
 }
+
+const decimalPointClicked = function(e) {
+    if(defaultZero){
+        displayOperands.textContent = this.textContent;
+        defaultZero = false;
+        canAddDecimalPoint = false;
+    }
+    else if(canAddDecimalPoint) {
+        displayOperands.textContent += this.textContent;
+        canAddDecimalPoint = false;
+    }
+}
+
+decimalPoint.addEventListener("click", decimalPointClicked)
 equal.addEventListener("click", buttonEqualClicked);
 buttonOperators.forEach(button => button.addEventListener("click",buttonOperatorClicked));
 buttonNums.forEach(button => button.addEventListener("click", buttonNumClicked));
