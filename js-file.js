@@ -107,6 +107,8 @@ const buttonEqualClicked = function(e) {
     }
     if(isNaN(result)){
         displayResults.textContent = "ERROR";
+        displayOperandsNoSpaces = temp;
+        return;
     }
     displayResults.textContent = result;
     displayOperandsNoSpaces = temp;
