@@ -102,7 +102,7 @@ const buttonEqualClicked = function(e) {
         result = "Error: Divison by zero";
     }
     
-    if(parseInt(result) - result === .000000000){
+    if(parseInt(result) - result <= .0000000001){
         result = parseInt(result);
     }
     if(isNaN(result)){
