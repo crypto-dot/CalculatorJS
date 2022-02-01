@@ -105,7 +105,7 @@ const buttonEqualClicked = function(e) {
     if(parseInt(result) - result === .000000000){
         result = parseInt(result);
     }
-    if(result == NaN){
+    if(isNaN(result)){
         displayResults.textContent = "ERROR";
     }
     displayResults.textContent = result;
